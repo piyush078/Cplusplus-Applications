@@ -7,15 +7,28 @@
 #include "console.h"
 #include "display.h"
 
+/**
+ * GAME DISPLAY VARIABLES.
+ * Changing them will change the orientation of the game grid.
+ */
 #define BOXES vector<vector<Box>>
 #define DIFFERENCE_X 8  /* Grid boxes padding x-axis */
 #define DIFFERENCE_Y 4  /* Grid boxes padding y-axis */
 #define INIT_X 6  /* Center position of top left box x-coordinate */
 #define INIT_Y 6  /* Center position of top left box y-coordinate */
 
-#define NUMBER_OF_BOXES 4  /* Number of boxes in a row */
 enum Key { UP, RIGHT, DOWN, LEFT };  /* Codes of the keys pressed */
+bool WINNER = false;  /* Winner counter */
+bool GAME_END = false;  /* Game over counter */
+int TILES_FILLED = 0;  /* Number of tiles filled */
 using namespace std;
+
+/**
+ * USER-DEFINED VARIABLES
+ * Changing them depends on user's interest.
+ */
+#define WINNER_SCORE 2048  /* Score of the winner tile */
+#define NUMBER_OF_BOXES 2  /* Number of boxes in a row */
 
 /**
  * Get the max limit of x and y coordinates
@@ -28,6 +41,20 @@ COOR getMaxCoor (short skip = 0) {
         INIT_Y + skip + DIFFERENCE_Y * NUMBER_OF_BOXES,  /* maximum point on y-axis */
         INIT_X + skip + DIFFERENCE_X * NUMBER_OF_BOXES   /* maximum point on x-axis */
     };
+}
+
+/**
+ * Print game over message.
+ *
+ * @param  void
+ * @return void
+ */
+void printGameOverMessage (bool status) {
+    if (status) {
+        printMessage ("Congratulations! You have won the game.", 2, getMaxCoor ().first);
+    } else {
+        printMessage ("Sorry! You lost the game.              ", 2, getMaxCoor ().first);
+    }
 }
 
 /**
@@ -61,7 +88,7 @@ void initializeScreen () {
         y = y1 + i * DIFFERENCE_Y;
         printCharacters ('=', x1, x2, y);
     }
-    printMessage ("Press 'P' to play.", 2, getMaxCoor ().first);
+    printMessage ("Press 'P' to play or 'Q' to quit.", 2, getMaxCoor ().first);
 }
 
 /**
@@ -94,12 +121,12 @@ void printGridData (BOXES &grid) {
         for (int j=0; j<NUMBER_OF_BOXES; ++j) {
             value = grid [i][j].getValue ();
             pos   = grid [i][j].getCoordinates ();
+            printMessage ("     ", pos.second-2, pos.first);
 
-            /* If the box is blank then it is shown empty */
             if (! grid [i][j].isBlank ()) {
-                printMessage (value, pos.second, pos.first);
-            } else {
-                printMessage (" ", pos.second, pos.first);
+                if (value < 10) printMessage (value, pos.second, pos.first);
+                else if (value < 1000) printMessage (value, pos.second-1, pos.first);
+                else printMessage (value, pos.second-2, pos.first);
             }
         }
     }
@@ -146,13 +173,22 @@ void fillNewBox (BOXES &grid) {
  * Set the starting of the game.
  *
  * @param  array
- * @return void
+ * @return boolean
  */
-void initializeGame (BOXES &grid) {
+bool initializeGame (BOXES &grid) {
+    char ch;
+    do {
+        ch = getch ();
+        if (ch == 0) continue;
+    } while (ch != 'q' && ch != 'Q' && ch != 27 && ch != 'p' && ch != 'P');
 
+    /* If the choice is not to play */
+    if (ch != 'p' && ch != 'P') return 0;
+    
     /* Fill the first two box to start the game */
     for (int i=0; i<2; ++i) fillNewBox (grid);
     printGridData (grid);
+    return 1;  /* If the user wants to play */
 }
 
 /**
@@ -171,6 +207,7 @@ void teleportBox (BOXES &grid, COOR &to, COOR &from, bool mergeAllowed) {
     /* Update the value of the boxes on a grid move */
     grid [from.first][from.second].updateValue (0);
     if (mergeAllowed) value = value * 2;
+    if (value == WINNER_SCORE) WINNER = true;  /* winner score tile reached; Game finished */
     grid [to.first][to.second].updateValue (value);
 
     /* Empty the source and fill the destination box */
@@ -267,14 +304,14 @@ void changeGridVertically (BOXES &grid, Key key) {
  * @return void
  */
 void seedGame (BOXES &grid) {
-    vector <int> row ({1, 1, 1, 1});
-    vector <int> col ({0, 1, 2, 3});
+    vector <int> row ({0, 0, 1, 1});
+    vector <int> col ({0, 1, 0, 1});
     vector <int> data ({2, 4, 8, 16});
 
     /* Fill the grid with dry values */
     for (int i=0; i<row.size (); ++i) {
-        grid [row [i]][col [i]].updateValue (data [i]);
-        grid [row [i]][col [i]].fill ();
+        grid [row [i] % NUMBER_OF_BOXES][col [i] % NUMBER_OF_BOXES].updateValue (data [i]);
+        grid [row [i] % NUMBER_OF_BOXES][col [i] % NUMBER_OF_BOXES].fill ();
     }
     printGridData (grid);
 }
@@ -299,6 +336,13 @@ void playGame (BOXES &grid) {
             fillNewBox (grid);
             printGridData (grid);
         }
+        
+        if (WINNER || GAME_END) {
+            if (WINNER) printGameOverMessage (true);
+            else printGameOverMessage (false);
+            break;
+        }
+        
     } while (ch != 'q' && ch != 'Q' && ch != 27);
 }
 
@@ -313,8 +357,9 @@ int main () {
     BOXES grid (NUMBER_OF_BOXES, vector <Box> (NUMBER_OF_BOXES));  /* Create an array of boxes */
     assignCoordinates (grid);  /* Assign the console coordinates to the boxes */
     initializeScreen ();  /* Initialize the screen */
-    initializeGame (grid);  /* Start the game */
-    playGame (grid);  /* Control the game */
-    printMessage ("", 0, getMaxCoor ().first);
+    if (initializeGame (grid)) {  /* Start the game */
+       playGame (grid);  /* Control the game */
+    }
+    printMessage ("Game Over. Thanks for playing.", 2, getMaxCoor (1).first);
     return 0;
 }
