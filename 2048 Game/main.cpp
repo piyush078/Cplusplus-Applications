@@ -25,8 +25,8 @@ using namespace std;
  */
 COOR getMaxCoor (short skip = 0) {
     return {
-        INIT_Y + skip + DIFFERENCE_Y * NUMBER_OF_BOXES,
-        INIT_X + skip + DIFFERENCE_X * NUMBER_OF_BOXES
+        INIT_Y + skip + DIFFERENCE_Y * NUMBER_OF_BOXES,  /* maximum point on y-axis */
+        INIT_X + skip + DIFFERENCE_X * NUMBER_OF_BOXES   /* maximum point on x-axis */
     };
 }
 
@@ -37,6 +37,8 @@ COOR getMaxCoor (short skip = 0) {
  * @return void
  */
 void initializeScreen () {
+
+    /* Draw borders and heading */
     setConsoleSize (600, 600);
     printCharacters ('=', 0, getMaxCoor ().second, 0);
     printCharacters ('=', 0, getMaxCoor ().second, 2);
@@ -47,11 +49,14 @@ void initializeScreen () {
           y1 = INIT_Y - DIFFERENCE_Y / 2,
           y2 = getMaxCoor ().first - DIFFERENCE_Y / 2;
     
+    /* Draw vertical borders of the grid */
     for (short x=x1; x<=x2; x+=DIFFERENCE_X) {
         for (short y=y1; y<=y2; ++y) {
             printCharacters ('|', x, x, y);
         }
     }
+    
+    /* Draw horizontal borders of the grid */
     for (short i=0; i<=NUMBER_OF_BOXES; ++i) {
         y = y1 + i * DIFFERENCE_Y;
         printCharacters ('=', x1, x2, y);
@@ -89,8 +94,13 @@ void printGridData (BOXES &grid) {
         for (int j=0; j<NUMBER_OF_BOXES; ++j) {
             value = grid [i][j].getValue ();
             pos   = grid [i][j].getCoordinates ();
-            if (! grid [i][j].isBlank ()) printMessage (value, pos.second, pos.first);
-            else printMessage (" ", pos.second, pos.first);
+            
+            /* If the box is blank then it is shown empty */
+            if (! grid [i][j].isBlank ()) {
+                printMessage (value, pos.second, pos.first);
+            } else {
+                printMessage (" ", pos.second, pos.first);
+            }
         }
     }
     printMessage ("", 0, 0);
@@ -104,11 +114,15 @@ void printGridData (BOXES &grid) {
  */
 COOR generateRandom (BOXES &grid) {
     int randomRow, randomCol;
+    
+    /* Generate random blank box to fill a new value */
     while (1) {
         randomRow = rand () % NUMBER_OF_BOXES;
         randomCol = rand () % NUMBER_OF_BOXES;
         if (grid [randomRow][randomCol].isBlank ()) break;
     }
+    
+    /* Return the random box */
     return { randomRow, randomCol };
 }
 
@@ -119,11 +133,14 @@ COOR generateRandom (BOXES &grid) {
  * @return void
  */
 void initializeGame (BOXES &grid) {
+    
+    /* Fill the first two box to start the game */
     for (int i=0; i<2; ++i) {
         short newValue = (rand () % 2 + 1) * 2;
         COOR key = generateRandom (grid);
         COOR pos = grid [key.first][key.second].getCoordinates ();
 
+        /* Set the values of the first filled boxes */
         grid [key.first][key.second].updateValue (newValue);
         grid [key.first][key.second].fill ();
         printMessage (newValue, pos.second, pos.first);
@@ -139,12 +156,16 @@ void initializeGame (BOXES &grid) {
  * @return void
  */
 void teleportBox (BOXES &grid, COOR &to, COOR &from, bool mergeAllowed) {
+    
+    /* Get the value of the source box */
     int value = grid [from.first][from.second].getValue ();
     
+    /* Update the value of the boxes on a grid move */
     grid [from.first][from.second].updateValue (0);
     if (mergeAllowed) value = value * 2;
     grid [to.first][to.second].updateValue (value);
     
+    /* Empty the source and fill the destination box */
     grid [from.first][from.second].empty ();
     grid [to.first][to.second].fill ();
 }
@@ -158,9 +179,9 @@ void teleportBox (BOXES &grid, COOR &to, COOR &from, bool mergeAllowed) {
  */
 void changeGridHorizontally (BOXES &grid, Key key) {
 
-    short free;
-    int oldValue;
-    bool mergeAllowed;
+    short free;  /* Store the box index to which a non-merging box will move */
+    int oldValue;  /* Counter for merging of boxes */
+    bool mergeAllowed;  /* Counter for if merging is allowed */
     int x1   = key == LEFT ? 0 : NUMBER_OF_BOXES-1;
     int x2   = key == LEFT ? NUMBER_OF_BOXES-1 : 0;
     int next = key == LEFT ? 1 : -1;
@@ -169,9 +190,10 @@ void changeGridHorizontally (BOXES &grid, Key key) {
         free = x1, oldValue = -1;
         for (int j=x1; j!=x2+next; j+=next) {
 
+            /* If a box is not empty then move the box */
             if (! grid [i][j].isBlank ()) {
                 
-                COOR to = {i, free}, from = {i, j};
+                COOR to = {i, free}, from = {i, j};  /* Source and destination boxes */
                 if (key == LEFT) {
                     mergeAllowed = free > 0 && oldValue > 0 && grid [i][free-1].getValue () == grid [i][j].getValue ();
                     if (mergeAllowed) to.second = to.second - 1;
@@ -180,6 +202,7 @@ void changeGridHorizontally (BOXES &grid, Key key) {
                     if (mergeAllowed) to.second = to.second + 1;
                 }
 
+                /* Move the box and update the counters */
                 teleportBox (grid, to, from, mergeAllowed);
                 oldValue = mergeAllowed ? -1 : grid [i][to.second].getValue ();
                 free = mergeAllowed ? free : (key == LEFT ? free + 1 : free - 1);
@@ -197,9 +220,9 @@ void changeGridHorizontally (BOXES &grid, Key key) {
  */
 void changeGridVertically (BOXES &grid, Key key) {
 
-    short free;
-    int oldValue;
-    bool mergeAllowed;
+    short free;  /* Store the box index to which a non-merging box will move */
+    int oldValue;  /* Counter for merging of boxes */
+    bool mergeAllowed;  /* Counter for if merging is allowed */
     int x1   = key == UP ? 0 : NUMBER_OF_BOXES-1;
     int x2   = key == UP ? NUMBER_OF_BOXES-1 : 0;
     int next = key == UP ? 1 : -1;
@@ -208,9 +231,10 @@ void changeGridVertically (BOXES &grid, Key key) {
         free = x1, oldValue = -1;
         for (int j=x1; j!=x2+next; j+=next) {
 
+            /* If a box is not empty then move the box */
             if (! grid [j][i].isBlank ()) {
                 
-                COOR to = {free, i}, from = {j, i};
+                COOR to = {free, i}, from = {j, i};  /* Source and destination boxes */
                 if (key == UP) {
                     mergeAllowed = free > 0 && oldValue > 0 && grid [free-1][i].getValue () == grid [j][i].getValue ();
                     if (mergeAllowed) to.second = to.second - 1;
@@ -219,6 +243,7 @@ void changeGridVertically (BOXES &grid, Key key) {
                     if (mergeAllowed) to.second = to.second + 1;
                 }
 
+                /* Move the box and update the counters */
                 teleportBox (grid, to, from, mergeAllowed);
                 oldValue = mergeAllowed ? -1 : grid [to.second][i].getValue ();
                 free = mergeAllowed ? free : (key == UP ? free + 1 : free - 1);
@@ -236,6 +261,8 @@ void changeGridVertically (BOXES &grid, Key key) {
 void seedGame (BOXES &grid) {
     vector <int> row ({1, 1, 1, 1});
     vector <int> col ({0, 1, 2, 3});
+    
+    /* Fill the grid with dry values */
     for (int i=0; i<row.size (); ++i) {
         grid [row [i]][col [i]].updateValue (2);
         grid [row [i]][col [i]].fill ();
@@ -269,12 +296,12 @@ void playGame (BOXES &grid) {
  * @return int
  */
 int main () {
-    srand (time (NULL));
-    BOXES grid (NUMBER_OF_BOXES, vector <Box> (NUMBER_OF_BOXES));
-    assignCoordinates (grid);
-    initializeScreen ();
-    initializeGame (grid);
-    playGame (grid);
+    srand (time (NULL));  /* Delete seed to get random values everytime */
+    BOXES grid (NUMBER_OF_BOXES, vector <Box> (NUMBER_OF_BOXES));  /* Create an array of boxes */
+    assignCoordinates (grid);  /* Assign the console coordinates to the boxes */
+    initializeScreen ();  /* Initialize the screen */
+    initializeGame (grid);  /* Start the game */
+    playGame (grid);  /* Control the game */
     printMessage ("", 0, getMaxCoor ().first);
     return 0;
 }
