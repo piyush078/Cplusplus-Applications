@@ -173,6 +173,7 @@ bool initializeGame (BOXES &grid) {
     /* Fill the first two box to start the game */
     for (int i=0; i<2; ++i) fillNewBox (grid);
     printGridData (grid);
+    printMessage ("Use arrow keys to control the game.", 2, getMaxCoor ().first);
     return 1;  /* If the user wants to play */
 }
 
