@@ -18,6 +18,7 @@
 #define INIT_Y 6  /* Center position of top left box y-coordinate */
 
 enum Key { UP, RIGHT, DOWN, LEFT };  /* Codes of the keys pressed */
+bool CHANGE = false;  /* Counter of a change on a move */
 bool WINNER = false;  /* Winner counter */
 bool GAME_END = false;  /* Game over counter */
 int TILES_FILLED = 0;  /* Number of tiles filled */
@@ -200,6 +201,13 @@ bool initializeGame (BOXES &grid) {
  * @return void
  */
 void teleportBox (BOXES &grid, COOR &to, COOR &from, bool mergeAllowed) {
+    
+    if (to.first == from.first && to.second == from.second) {
+        return;
+    }
+    
+    /* A box will change */
+    CHANGE = true;
 
     /* Get the value of the source box */
     int value = grid [from.first][from.second].getValue ();
@@ -326,13 +334,18 @@ void playGame (BOXES &grid) {
     char ch;
     do {
         ch = getch ();
+        CHANGE = false;  /* Change is false before every move */
         if (ch == 0 || ch == 0xE0) ch = getche ();
         if (ch == 75) changeGridHorizontally (grid, LEFT);
         else if (ch == 77) changeGridHorizontally (grid, RIGHT);
         else if (ch == 72) changeGridVertically (grid, UP);
         else if (ch == 80) changeGridVertically (grid, DOWN);
         
-        if (ch == 75 || ch == 77 || ch == 72 || ch == 80) {
+        /**
+         * Important: True value of CHANGE is important before calling fillNewBox ()
+         * When there is no change in grid, there is no need to fill a new tile
+         */
+        if ((ch == 75 || ch == 77 || ch == 72 || ch == 80) && CHANGE) {
             fillNewBox (grid);
             printGridData (grid);
         }
