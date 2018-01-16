@@ -61,7 +61,7 @@ void initializeScreen () {
         y = y1 + i * DIFFERENCE_Y;
         printCharacters ('=', x1, x2, y);
     }
-    printMessage ("Press 'P' to play.", 2, y2+2);
+    printMessage ("Press 'P' to play.", 2, getMaxCoor ().first);
 }
 
 /**
@@ -127,6 +127,22 @@ COOR generateRandom (BOXES &grid) {
 }
 
 /**
+ * Fill a new box.
+ *
+ * @param  array
+ * @return void
+ */
+void fillNewBox (BOXES &grid) {
+    short newValue = (rand () % 2 + 1) * 2;
+    COOR key = generateRandom (grid);
+    COOR pos = grid [key.first][key.second].getCoordinates ();
+    
+    /* Set the values of the box */
+    grid [key.first][key.second].updateValue (newValue);
+    grid [key.first][key.second].fill ();
+}
+
+/**
  * Set the starting of the game.
  *
  * @param  array
@@ -135,16 +151,8 @@ COOR generateRandom (BOXES &grid) {
 void initializeGame (BOXES &grid) {
 
     /* Fill the first two box to start the game */
-    for (int i=0; i<2; ++i) {
-        short newValue = (rand () % 2 + 1) * 2;
-        COOR key = generateRandom (grid);
-        COOR pos = grid [key.first][key.second].getCoordinates ();
-
-        /* Set the values of the first filled boxes */
-        grid [key.first][key.second].updateValue (newValue);
-        grid [key.first][key.second].fill ();
-        printMessage (newValue, pos.second, pos.first);
-    }
+    for (int i=0; i<2; ++i) fillNewBox (grid);
+    printGridData (grid);
 }
 
 /**
@@ -261,10 +269,11 @@ void changeGridVertically (BOXES &grid, Key key) {
 void seedGame (BOXES &grid) {
     vector <int> row ({1, 1, 1, 1});
     vector <int> col ({0, 1, 2, 3});
+    vector <int> data ({2, 4, 8, 16});
 
     /* Fill the grid with dry values */
     for (int i=0; i<row.size (); ++i) {
-        grid [row [i]][col [i]].updateValue (2);
+        grid [row [i]][col [i]].updateValue (data [i]);
         grid [row [i]][col [i]].fill ();
     }
     printGridData (grid);
@@ -285,7 +294,11 @@ void playGame (BOXES &grid) {
         else if (ch == 77) changeGridHorizontally (grid, RIGHT);
         else if (ch == 72) changeGridVertically (grid, UP);
         else if (ch == 80) changeGridVertically (grid, DOWN);
-        printGridData (grid);
+        
+        if (ch == 75 || ch == 77 || ch == 72 || ch == 80) {
+            fillNewBox (grid);
+            printGridData (grid);
+        }
     } while (ch != 'q' && ch != 'Q' && ch != 27);
 }
 
