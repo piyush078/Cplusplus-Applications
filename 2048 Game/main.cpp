@@ -43,19 +43,19 @@ void initializeScreen () {
     printCharacters ('=', 0, getMaxCoor ().second, 0);
     printCharacters ('=', 0, getMaxCoor ().second, 2);
     printMessage ("2048 Game", 2, 1);
-    
+
     short x1 = INIT_X - DIFFERENCE_X / 2, y,
           x2 = getMaxCoor ().second - DIFFERENCE_X / 2,
           y1 = INIT_Y - DIFFERENCE_Y / 2,
           y2 = getMaxCoor ().first - DIFFERENCE_Y / 2;
-    
+
     /* Draw vertical borders of the grid */
     for (short x=x1; x<=x2; x+=DIFFERENCE_X) {
         for (short y=y1; y<=y2; ++y) {
             printCharacters ('|', x, x, y);
         }
     }
-    
+
     /* Draw horizontal borders of the grid */
     for (short i=0; i<=NUMBER_OF_BOXES; ++i) {
         y = y1 + i * DIFFERENCE_Y;
@@ -94,7 +94,7 @@ void printGridData (BOXES &grid) {
         for (int j=0; j<NUMBER_OF_BOXES; ++j) {
             value = grid [i][j].getValue ();
             pos   = grid [i][j].getCoordinates ();
-            
+
             /* If the box is blank then it is shown empty */
             if (! grid [i][j].isBlank ()) {
                 printMessage (value, pos.second, pos.first);
@@ -114,14 +114,14 @@ void printGridData (BOXES &grid) {
  */
 COOR generateRandom (BOXES &grid) {
     int randomRow, randomCol;
-    
+
     /* Generate random blank box to fill a new value */
     while (1) {
         randomRow = rand () % NUMBER_OF_BOXES;
         randomCol = rand () % NUMBER_OF_BOXES;
         if (grid [randomRow][randomCol].isBlank ()) break;
     }
-    
+
     /* Return the random box */
     return { randomRow, randomCol };
 }
@@ -133,7 +133,7 @@ COOR generateRandom (BOXES &grid) {
  * @return void
  */
 void initializeGame (BOXES &grid) {
-    
+
     /* Fill the first two box to start the game */
     for (int i=0; i<2; ++i) {
         short newValue = (rand () % 2 + 1) * 2;
@@ -156,15 +156,15 @@ void initializeGame (BOXES &grid) {
  * @return void
  */
 void teleportBox (BOXES &grid, COOR &to, COOR &from, bool mergeAllowed) {
-    
+
     /* Get the value of the source box */
     int value = grid [from.first][from.second].getValue ();
-    
+
     /* Update the value of the boxes on a grid move */
     grid [from.first][from.second].updateValue (0);
     if (mergeAllowed) value = value * 2;
     grid [to.first][to.second].updateValue (value);
-    
+
     /* Empty the source and fill the destination box */
     grid [from.first][from.second].empty ();
     grid [to.first][to.second].fill ();
@@ -192,7 +192,7 @@ void changeGridHorizontally (BOXES &grid, Key key) {
 
             /* If a box is not empty then move the box */
             if (! grid [i][j].isBlank ()) {
-                
+
                 COOR to = {i, free}, from = {i, j};  /* Source and destination boxes */
                 if (key == LEFT) {
                     mergeAllowed = free > 0 && oldValue > 0 && grid [i][free-1].getValue () == grid [i][j].getValue ();
@@ -233,19 +233,19 @@ void changeGridVertically (BOXES &grid, Key key) {
 
             /* If a box is not empty then move the box */
             if (! grid [j][i].isBlank ()) {
-                
+
                 COOR to = {free, i}, from = {j, i};  /* Source and destination boxes */
                 if (key == UP) {
                     mergeAllowed = free > 0 && oldValue > 0 && grid [free-1][i].getValue () == grid [j][i].getValue ();
-                    if (mergeAllowed) to.second = to.second - 1;
+                    if (mergeAllowed) to.first = to.first - 1;
                 } else if (key == DOWN) {
                     mergeAllowed = free < NUMBER_OF_BOXES-1 && oldValue > 0 && grid [free+1][i].getValue () == grid [j][i].getValue ();
-                    if (mergeAllowed) to.second = to.second + 1;
+                    if (mergeAllowed) to.first = to.first + 1;
                 }
 
                 /* Move the box and update the counters */
                 teleportBox (grid, to, from, mergeAllowed);
-                oldValue = mergeAllowed ? -1 : grid [to.second][i].getValue ();
+                oldValue = mergeAllowed ? -1 : grid [to.first][i].getValue ();
                 free = mergeAllowed ? free : (key == UP ? free + 1 : free - 1);
             }
         }
@@ -261,7 +261,7 @@ void changeGridVertically (BOXES &grid, Key key) {
 void seedGame (BOXES &grid) {
     vector <int> row ({1, 1, 1, 1});
     vector <int> col ({0, 1, 2, 3});
-    
+
     /* Fill the grid with dry values */
     for (int i=0; i<row.size (); ++i) {
         grid [row [i]][col [i]].updateValue (2);
