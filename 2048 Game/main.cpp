@@ -6,16 +6,7 @@
 #include "class.h"
 #include "console.h"
 #include "display.h"
-
-/**
- * GAME DISPLAY VARIABLES.
- * Changing them will change the orientation of the game grid.
- */
-#define BOXES vector<vector<Box>>
-#define DIFFERENCE_X 8  /* Grid boxes padding x-axis */
-#define DIFFERENCE_Y 4  /* Grid boxes padding y-axis */
-#define INIT_X 6  /* Center position of top left box x-coordinate */
-#define INIT_Y 6  /* Center position of top left box y-coordinate */
+#include "config.h"
 
 enum Key { UP, RIGHT, DOWN, LEFT };  /* Codes of the keys pressed */
 bool CHANGE = false;  /* Counter of a change on a move */
@@ -23,13 +14,6 @@ bool WINNER = false;  /* Winner counter */
 bool GAME_END = false;  /* Game over counter */
 int TILES_FILLED = 0;  /* Number of tiles filled */
 using namespace std;
-
-/**
- * USER-DEFINED VARIABLES
- * Changing them depends on user's interest.
- */
-#define WINNER_SCORE 2048  /* Score of the winner tile */
-#define NUMBER_OF_BOXES 2  /* Number of boxes in a row */
 
 /**
  * Get the max limit of x and y coordinates
