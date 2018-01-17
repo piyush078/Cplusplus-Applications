@@ -18,8 +18,6 @@ map <COORD, bool> Covered;  /* Store the points under the snake */
 COORD Food;  /* Coordinates of the food */
 enum Direction { UP, RIGHT, DOWN, LEFT };
 
-COORD generateFood (void);
-
 /**
  * Show welcome screen.
  *
@@ -37,18 +35,6 @@ bool welcomeScreen () {
     
     /* If the user wants to play */
     return (ch == 'p' || ch == 'P' || ch == 13);
-}
-
-/**
- * Show the new food on the console and handle its coordinates.
- *
- * @param  void
- * @return void
- */
-void printNewFood () {
-    COORD point = generateFood ();
-    consoleLog ('o', point.first, point.second);
-    Food = point;
 }
 
 /**
@@ -71,6 +57,18 @@ COORD generateFood () {
 }
 
 /**
+ * Show the new food on the console and handle its coordinates.
+ *
+ * @param  void
+ * @return void
+ */
+void printNewFood () {
+    COORD point = generateFood ();
+    consoleLog ('o', point.first, point.second);
+    Food = point;
+}
+
+/**
  * Set the initial screen and snake in the game.
  *
  * @param  void
@@ -84,7 +82,7 @@ COORD initializeGame () {
     /* Make the initial snake */
     short x;
     short y = _BOTTOM_LIMIT - 2;
-    for (short i=0; i<=4; ++i) {
+    for (short i=0; i<_INITIAL_LENGTH; ++i) {
         x = _RIGHT_LIMIT - i - 2;
         Covered [{x, y}] = true;  /* Put the points under snake in the map */
         Snake.push ({ x, y });  /*  Add new points to the snake */
@@ -102,6 +100,16 @@ COORD initializeGame () {
  */
 bool isFoodEaten (COORD currentPos) {
     return currentPos == Food;
+}
+
+/**
+ * Check if the game is over.
+ *
+ * @param  struct
+ * @return boolean
+ */
+bool isGameOver (COORD head) {
+    return head.first == _LEFT_LIMIT || head.first == _RIGHT_LIMIT || head.second == _TOP_LIMIT || head.second == _BOTTOM_LIMIT;
 }
 
 /**
@@ -234,13 +242,15 @@ void playGame (COORD currentPos) {
         if (isFoodEaten (currentPos)) {
             slither (currentPos, Food, currentDir, false);  /* Make the new head at food coordinates */
             printNewFood ();  /* Print new food */
+            
+        } else if (isGameOver (currentPos)) {
+            break;
         }
         
         /* Print the new head and delete the tail */
         slither (currentPos, prevHead, currentDir);
         
     } while (ch != 'q' && ch != 'Q' && ch != 27);
-    consoleLog ("Game Over.", _LEFT_LIMIT, _RIGHT_LIMIT, _BOTTOM_LIMIT + 1);
 }
 
 /**
@@ -251,9 +261,12 @@ void playGame (COORD currentPos) {
  */
 int main () {
     srand (time (NULL));
+    
+    /* Returns true when key for play is pressed */
     if (welcomeScreen ()) {
         playGame (initializeGame ());
     }
-    consoleLog (' ', 0, _BOTTOM_LIMIT+2);
+    consoleLog ("Game Over", _LEFT_LIMIT, _RIGHT_LIMIT, _BOTTOM_LIMIT + 1);
+    consoleLog ("      Your score is: " + to_string (Snake.size () - _INITIAL_LENGTH) + "      ", _LEFT_LIMIT, _RIGHT_LIMIT, _BOTTOM_LIMIT + 2);
     return 0;
 }

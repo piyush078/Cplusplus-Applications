@@ -13,6 +13,8 @@ void setCursor (short x, short y) {
 }
 
 /**
+ * Clear the console window.
+ *
  * @param void
  * @return void
  */
