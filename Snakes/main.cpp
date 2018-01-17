@@ -13,17 +13,12 @@ using namespace std;
  * Global variables.
  * Prototypes of the functions declared.
  */
-queue <COORD> Snake;
-map <COORD, bool> Covered;
-COORD Food;
+queue <COORD> Snake;  /* SNAKE as a queue of the coordinates */
+map <COORD, bool> Covered;  /* Store the points under the snake */
+COORD Food;  /* Coordinates of the food */
 enum Direction { UP, RIGHT, DOWN, LEFT };
 
-void printSnake (void);
-bool welcomeScreen (void);
-void printNewFood (bool);
-COORD initializeGame (void);
 COORD generateFood (void);
-void playGame (void);
 
 /**
  * Show welcome screen.
@@ -47,15 +42,13 @@ bool welcomeScreen () {
 /**
  * Show the new food on the console and handle its coordinates.
  *
- * @param  boolean
+ * @param  void
  * @return void
  */
-void printNewFood (bool inWait) {
-    if (inWait) {
-        COORD point = generateFood ();
-        consoleLog ('o', point.first, point.second);
-        Food = point;
-    }
+void printNewFood () {
+    COORD point = generateFood ();
+    consoleLog ('o', point.first, point.second);
+    Food = point;
 }
 
 /**
@@ -74,8 +67,7 @@ COORD generateFood () {
         if (Covered.find ({ randomCol, randomRow }) == Covered.end ())
             break;
     }
-    Food = { randomCol, randomCol };
-    return { randomCol, randomRow };
+    return Food = { randomCol, randomRow };
 }
 
 /**
@@ -103,21 +95,37 @@ COORD initializeGame () {
 }
 
 /**
+ * Check if the food coordinate is covered by the snake.
+ *
+ * @param  struct
+ * @return boolean
+ */
+bool isFoodEaten (COORD currentPos) {
+    return currentPos == Food;
+}
+
+/**
  * Push new points and delete the tail in the snake; Print the snake.
  *
  * @param  struct, struct
  * @param  int
+ * @param  bool
  * @return void
  */
-void slither (COORD newHead, COORD prevHead, int currentDir) {
+void slither (COORD newHead, COORD prevHead, int currentDir, bool deleteTail = true) {
     
     /* Remove the previous head */
     consoleLog ('o', prevHead.first, prevHead.second);
-    
-    /* Delete the tail */
-    COORD tail = Snake.front ();
-    Snake.pop ();
-    consoleLog (' ', tail.first, tail.second);
+
+    /* It equals false when the length of snake is increased after eating food */
+    if (deleteTail) {
+        
+        /* Delete the tail */
+        COORD tail = Snake.front ();
+        Snake.pop ();
+        consoleLog (' ', tail.first, tail.second);
+        Covered.erase ({ tail.first, tail.second });
+    }
     
     /* Show the new head and push it in the snake */
     switch (currentDir) {
@@ -127,6 +135,7 @@ void slither (COORD newHead, COORD prevHead, int currentDir) {
         case DOWN: consoleLog ('v', newHead.first, newHead.second); break;
     }
     Snake.push (newHead);
+    Covered [{ newHead.first, newHead.second }] = true;  /* Add the new point to the map */
 }
 
 /**
@@ -189,7 +198,6 @@ COORD continuePath (COORD Transition [], int currentDir, COORD currentPos) {
 void playGame (COORD currentPos) {
 
     char ch;
-    bool inWait = true;  /* Counter to show the food */
     COORD Transition [4] = { {0, -1}, {1, 0}, {0, 1}, {-1, 0} };  /* Changes in the coordinates of every direction */
     COORD prevHead;  /* Head of the snake before a move */
     
@@ -198,11 +206,10 @@ void playGame (COORD currentPos) {
      * Important: Initial direction is left
      */
     int currentDir = LEFT;
+    printNewFood ();  /* Print new food */
     
     do {
-        Sleep (100);  /* Wait before every snake move */
-        printNewFood (inWait);
-        inWait = false;
+        Sleep (1000 / _SPEED);  /* Wait before every snake move */
         prevHead = currentPos;
         
         if (kbhit ()) {
@@ -221,6 +228,12 @@ void playGame (COORD currentPos) {
          */
         if (currentPos == prevHead) {
             currentPos = continuePath (Transition, currentDir, currentPos);
+        }
+        
+        /* Check if the food has been eaten */
+        if (isFoodEaten (currentPos)) {
+            slither (currentPos, Food, currentDir, false);  /* Make the new head at food coordinates */
+            printNewFood ();  /* Print new food */
         }
         
         /* Print the new head and delete the tail */
