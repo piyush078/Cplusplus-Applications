@@ -23,12 +23,12 @@ vector <int> makeSieve (int limit) {
     return primes;
 }
 
-void generatePrimes (int m, int n) {
+vector <int> generatePrimes (int m, int n) {
     int limit = floor (sqrt (n)) + 1;
-    vector <int> primes = makeSieve (limit);
+    vector <int> primes = makeSieve (limit), ans;
     vector <bool> sieve (n-m+1, true);
     for (int &ele: primes) {
-        if (ele >= m && ele <= n) cout << ele << endl;
+        if (ele >= m && ele <= n) ans.push_back (ele);
     }
     
     if (m == 1) ++m;
@@ -40,8 +40,9 @@ void generatePrimes (int m, int n) {
         }
     }
     for (int i=m; i<n; ++i) {
-        if (sieve [i - m]) cout << i << endl;
+        if (sieve [i - m]) ans.push_back (i);
     }
+    return ans;
 }
 
 int main () {
@@ -49,7 +50,8 @@ int main () {
     cin >> t;
     while (t--) {
         cin >> m >> n;
-        generatePrimes (m, n + 1);
+        vector <int> ans = generatePrimes (m, n + 1);
+        for (int &ele:ans) cout << ele << endl;
         cout << endl;
     }
     return 0;
